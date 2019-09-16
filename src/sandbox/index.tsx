@@ -8,20 +8,20 @@ import { runJSTest } from './javascript';
 export type SandboxFiles = { [filename: string]: string };
 
 const initialSources: { [p: string]: string } = {
-  'index.test.js': `const { truth } = require('index.js')
+  'index.test.js': `const { answer } = require('index.js')
 
-describe('truth', () => {
-  test('All number is 42', () => {
-    expect(truth()).toBe(42)
+describe('computed on The Earth', () => {
+  test('Life, the Universe, and Everything is 42.', () => {
+    expect(answer()).toBe(42)
   })
 })
 `,
-  'index.js': `function truth() {
+  'index.js': `function answer() {
   return 8 * 6;
 }
 
 module.exports = {
-  truth
+  answer
 }
 `
 };
@@ -98,21 +98,16 @@ const FileSelector: React.FC<FileSelectorProps> = ({
 };
 
 type FileCreatorProps = {
-  setFilename: React.Dispatch<React.SetStateAction<string>>;
-  setText: (newText: string, newFilename?: string) => void;
+  newFile: (newFilename: string) => void;
 };
-const FileCreator: React.FC<FileCreatorProps> = ({
-  setFilename,
-  setText
-}) => {
+const FileCreator: React.FC<FileCreatorProps> = ({ newFile }) => {
   const [newFilename, setNewFilename] = React.useState('');
 
   return (
     <form
       onSubmit={ev => {
         ev.preventDefault();
-        setText('', newFilename);
-        setFilename(newFilename);
+        newFile(newFilename);
       }}
     >
       <input
@@ -141,7 +136,13 @@ const useSandboxRunner = (files: SandboxFiles) => {
 };
 
 const Sandbox: React.FC = () => {
-  const { files, setText, filename, setFilename } = useSandboxFiles();
+  const {
+    newFile,
+    files,
+    setText,
+    filename,
+    setFilename
+  } = useSandboxFiles();
   const { run, stdout } = useSandboxRunner(files);
 
   return (
@@ -155,7 +156,7 @@ const Sandbox: React.FC = () => {
         />
       </div>
       <div style={{ gridColumn: '2/2' }}>
-        <FileCreator setFilename={setFilename} setText={setText} />
+        <FileCreator newFile={newFile} />
         <FileSelector
           files={files}
           filename={filename}
