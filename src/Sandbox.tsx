@@ -46,7 +46,6 @@ const SandboxDiv = styled.div`
 `;
 
 export type EditorProps = {
-  files: SandboxFiles;
   run: (name?: string) => void;
   filename: string;
   text: string;
@@ -84,7 +83,6 @@ const Sandbox: React.FC = () => {
 
   const { editorDiv } = useSandboxEditor({
     run,
-    files,
     setText,
     filename,
     text

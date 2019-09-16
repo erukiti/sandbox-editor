@@ -195,8 +195,6 @@ export const useSandboxEditor = (state: EditorProps) => {
   }, [editor, filename, setText]);
 
   return {
-    run,
-    editorDiv,
-    filename
+    editorDiv
   };
 };
