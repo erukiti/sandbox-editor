@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
@@ -27,7 +27,7 @@ import 'monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js';
 
-import { EditorState } from './Sandbox';
+import { EditorProps } from './Sandbox';
 
 monaco.languages.registerDocumentFormattingEditProvider('javascript', {
   async provideDocumentFormattingEdits(model) {
@@ -64,16 +64,16 @@ const getLanguage = (filename: string) => {
   return languageByExtensions[ext] || 'text';
 };
 
-export const useSandboxEditor = (state: EditorState) => {
+type EditorState = {
+  [filename: string]: {
+    model: monaco.editor.ITextModel;
+    editorViewState: monaco.editor.ICodeEditorViewState | null;
+  };
+};
+
+export const useSandboxEditor = (state: EditorProps) => {
   console.log('useSandbox');
-  const {
-    initialSources,
-    files,
-    setFiles,
-    run,
-    filename,
-    setFilename
-  } = state;
+  const { setText, run, text, filename } = state;
 
   const editorDiv = useRef<HTMLDivElement>(null);
   const [
@@ -82,12 +82,7 @@ export const useSandboxEditor = (state: EditorState) => {
   ] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const subscriptionRef = useRef<monaco.IDisposable[]>([]);
-  const modelsRef = useRef<{ [name: string]: monaco.editor.ITextModel }>(
-    {}
-  );
-  const editorStatesRef = useRef<{
-    [name: string]: monaco.editor.ICodeEditorViewState;
-  }>({});
+  const editorStateRef = useRef<EditorState>({});
 
   const unsubscription = () => {
     subscriptionRef.current.forEach(subscription => {
@@ -133,92 +128,75 @@ export const useSandboxEditor = (state: EditorState) => {
   }, [run, editor]);
 
   useEffect(() => {
-    console.log('create models');
-    const newSources: { [name: string]: string } = {};
-    Object.keys(initialSources).forEach(name => {
-      const text = initialSources[name];
-      if (name in modelsRef.current) {
-        const model = modelsRef.current[name];
-        if (text !== model.getValue()) {
-          model.pushEditOperations(
-            [],
-            [{ range: model.getFullModelRange(), text }],
-            () => null
-          );
-        }
-      } else {
-        const model = monaco.editor.createModel(text, getLanguage(name));
-        model.updateOptions({
-          tabSize: 2
-        });
-        modelsRef.current[name] = model;
+    if (!editor) {
+      return;
+    }
+
+    console.log('create model and EditorViewState');
+
+    const newModel = () => {
+      const model = monaco.editor.createModel(text, getLanguage(filename));
+      model.updateOptions({ tabSize: 2 });
+      editor.setModel(model);
+      editor.focus();
+      const editorViewState = editor.saveViewState();
+      editorStateRef.current[filename] = { model, editorViewState };
+    };
+
+    const updateModel = () => {
+      const { model, editorViewState } = editorStateRef.current[filename];
+      if (text !== model.getValue()) {
+        model.pushEditOperations(
+          [],
+          [{ range: model.getFullModelRange(), text }],
+          () => null
+        );
       }
-      newSources[name] = modelsRef.current[name].getValue();
-    });
-    setFiles(newSources);
-  }, [initialSources, setFiles]);
+      editor.setModel(model);
+      editor.focus();
+
+      if (editorViewState) {
+        editor.restoreViewState(editorViewState);
+      }
+    };
+
+    if (filename in editorStateRef.current) {
+      updateModel();
+    } else {
+      newModel();
+    }
+  }, [editor, text, filename]);
 
   useEffect(() => {
     if (!editor) {
       return;
     }
-    console.log('setModel', filename);
-    editor.setModel(modelsRef.current[filename]);
-    editor.restoreViewState(editorStatesRef.current[filename]);
-    editor.focus();
-  }, [editor, filename]);
-
-  useEffect(() => {
-    if (!editor) {
-      return;
-    }
-    console.log('subscription', filename);
+    console.log('create model subscription', filename);
     subscriptionRef.current.push(
-      modelsRef.current[filename].onDidChangeContent(ev => {
-        editorStatesRef.current[filename] = editor.saveViewState()!;
-        setFiles(x => ({
-          ...x,
-          [filename]: modelsRef.current[filename].getValue()
-        }));
+      editorStateRef.current[filename].model.onDidChangeContent(ev => {
+        editorStateRef.current[
+          filename
+        ].editorViewState = editor.saveViewState();
+        setText(editorStateRef.current[filename].model.getValue());
         // onChange
       })
     );
+    subscriptionRef.current.push(
+      editor.onDidChangeCursorPosition(ev => {
+        editorStateRef.current[
+          filename
+        ].editorViewState = editor.saveViewState();
+      })
+    );
+
     return () => {
       unsubscription();
     };
-  }, [editor, filename, setFiles]);
-
-  const selectFilename = React.useCallback(
-    (s: string) => {
-      if (editor) {
-        editorStatesRef.current[filename] = editor.saveViewState()!;
-      }
-      setFilename(s);
-    },
-    [filename]
-  );
-
-  const newFile = React.useCallback(
-    (s: string) => {
-      const model = monaco.editor.createModel('', getLanguage(s));
-      model.updateOptions({
-        tabSize: 2
-      });
-      modelsRef.current[s] = model;
-      setFiles(x => {
-        x[s] = x[s] || '';
-        return x;
-      });
-      selectFilename(s);
-    },
-    [selectFilename, setFiles]
-  );
+  }, [editor, filename, setText]);
 
   return {
     run,
     editorDiv,
-    selectFilename,
-    newFile,
     filename
   };
 };

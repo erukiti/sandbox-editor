@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { useSandboxEditor } from './SandboxHooks';
@@ -6,11 +6,6 @@ import { useSandboxEditor } from './SandboxHooks';
 import { runJSTest } from './sandbox/javascript';
 
 export type SandboxFiles = { [filename: string]: string };
-
-const useSandboxFiles = () => {
-  const [files, setFiles] = useState<SandboxFiles>({});
-  return { files, setFiles };
-};
 
 const initialSources: { [p: string]: string } = {
   'index.test.js': `const { truth } = require('index.js')
@@ -31,6 +26,13 @@ module.exports = {
 `
 };
 
+const useSandboxFiles = () => {
+  const [files, setFiles] = useState<SandboxFiles>(initialSources);
+  const [filename, setFilename] = React.useState('index.test.js');
+
+  return { files, setFiles, filename, setFilename };
+};
+
 const EditorDiv = styled.div`
   width: 50vw;
   height: 100vh;
@@ -43,18 +45,16 @@ const SandboxDiv = styled.div`
   grid-template-columns: 50% 50%;
 `;
 
-export type EditorState = {
+export type EditorProps = {
   files: SandboxFiles;
-  setFiles: React.Dispatch<React.SetStateAction<SandboxFiles>>;
   run: (name?: string) => void;
-  initialSources: { [p: string]: string };
   filename: string;
-  setFilename: React.Dispatch<React.SetStateAction<string>>;
+  text: string;
+  setText: (newText: string, newFilename?: string) => void;
 };
 
 const Sandbox: React.FC = () => {
-  const { files, setFiles } = useSandboxFiles();
-  const [filename, setFilename] = React.useState('index.test.js');
+  const { files, setFiles, filename, setFilename } = useSandboxFiles();
   const [stdout, setStdout] = React.useState('');
 
   const run = React.useCallback(
@@ -66,13 +66,28 @@ const Sandbox: React.FC = () => {
     [files, setStdout]
   );
 
-  const { editorDiv, selectFilename, newFile } = useSandboxEditor({
-    initialSources,
+  const text = files[filename];
+  const setText = useCallback(
+    (newText: string, newFilename: string = filename) => {
+      setFiles(x => ({
+        ...x,
+        [newFilename]: newText
+      }));
+    },
+    [setFiles, filename]
+  );
+
+  const newFile = (newFilename: string) => {
+    setText('', newFilename);
+    setFilename(newFilename);
+  };
+
+  const { editorDiv } = useSandboxEditor({
     run,
     files,
-    setFiles,
+    setText,
     filename,
-    setFilename
+    text
   });
   const [newFilename, setNewFilename] = React.useState('');
 
@@ -91,7 +106,6 @@ const Sandbox: React.FC = () => {
           onSubmit={ev => {
             ev.preventDefault();
             newFile(newFilename);
-            setNewFilename('');
           }}
         >
           <input
@@ -107,7 +121,7 @@ const Sandbox: React.FC = () => {
             const style = isCurrent ? { background: '#aacccc' } : {};
             return (
               <div
-                onClick={() => selectFilename(name)}
+                onClick={() => setFilename(name)}
                 key={name}
                 style={style}
               >
