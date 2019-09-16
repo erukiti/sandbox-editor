@@ -70,8 +70,10 @@ export const useEditorActions = (state: EditorState) => {
   };
 };
 
+export type EditorDetail = (state: EditorState) => React.FC;
+
 interface EditorProps {
-  useEditorDetail: (state: EditorState) => React.FC;
+  useEditorDetail: EditorDetail;
   handleFiles?: (files: EditorFile[]) => void;
   handleTab?: (tab: number) => void;
 }
@@ -108,7 +110,7 @@ const Editor: React.FC<EditorProps> = ({
   }, [handleTab, currentTab]);
 
   console.log('files.length', files.length);
-  if (files.length > 0) {
+  if (files.length <= 0) {
     return renderer({});
   } else {
     return (
