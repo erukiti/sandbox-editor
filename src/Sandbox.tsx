@@ -1,10 +1,19 @@
-import React from "react";
-import styled from "styled-components";
+import React, { useState } from 'react';
+import styled from 'styled-components';
 
-import { useSandbox } from "./SandboxHooks";
+import { useSandboxEditor } from './SandboxHooks';
+
+import { runJSTest } from './sandbox/javascript';
+
+export type SandboxFiles = { [filename: string]: string };
+
+const useSandboxFiles = () => {
+  const [files, setFiles] = useState<SandboxFiles>({});
+  return { files, setFiles };
+};
 
 const initialSources: { [p: string]: string } = {
-  "index.test.js": `const { truth } = require('index.js')
+  'index.test.js': `const { truth } = require('index.js')
 
 describe('truth', () => {
   test('All number is 42', () => {
@@ -12,7 +21,7 @@ describe('truth', () => {
   })
 })
 `,
-  "index.js": `function truth() {
+  'index.js': `function truth() {
   return 8 * 6;
 }
 
@@ -34,34 +43,47 @@ const SandboxDiv = styled.div`
   grid-template-columns: 50% 50%;
 `;
 
-const Sandbox: React.FC = () => {
-  const {
-    run,
-    stdout,
-    editorDiv,
-    sources,
-    selectFilename,
-    newFile,
-    filename
-  } = useSandbox(initialSources);
-  const [newFilename, setNewFilename] = React.useState("");
+export type EditorState = {
+  files: SandboxFiles;
+  setFiles: React.Dispatch<React.SetStateAction<SandboxFiles>>;
+  run: (name?: string) => void;
+  initialSources: { [p: string]: string };
+};
 
-  const sourceList = Object.keys(sources).map(name => ({
+const Sandbox: React.FC = () => {
+  const { files, setFiles } = useSandboxFiles();
+  const [stdout, setStdout] = React.useState('');
+
+  const run = React.useCallback(
+    (name: string = 'index.test.js') => {
+      console.log('run');
+      setStdout('');
+      runJSTest(files, name, setStdout);
+    },
+    [files, setStdout]
+  );
+
+  const { editorDiv, selectFilename, newFile, filename } = useSandboxEditor(
+    { initialSources, run, files, setFiles }
+  );
+  const [newFilename, setNewFilename] = React.useState('');
+
+  const sourceList = Object.keys(files).map(name => ({
     name,
-    size: sources[name].length
+    size: files[name].length
   }));
 
-  console.log("sources", sources);
+  console.log('sources', files);
   return (
     <SandboxDiv>
-      <EditorDiv style={{ gridColumn: "1/2" }} ref={editorDiv} />
-      <div style={{ gridColumn: "2/2" }}>
+      <EditorDiv style={{ gridColumn: '1/2' }} ref={editorDiv} />
+      <div style={{ gridColumn: '2/2' }}>
         <button onClick={() => run()}>RUN</button>
         <form
           onSubmit={ev => {
             ev.preventDefault();
             newFile(newFilename);
-            setNewFilename("");
+            setNewFilename('');
           }}
         >
           <input
@@ -74,7 +96,7 @@ const Sandbox: React.FC = () => {
         <div>
           {sourceList.map(({ name, size }: any) => {
             const isCurrent = name === filename;
-            const style = isCurrent ? { background: "#aacccc" } : {};
+            const style = isCurrent ? { background: '#aacccc' } : {};
             return (
               <div
                 onClick={() => selectFilename(name)}

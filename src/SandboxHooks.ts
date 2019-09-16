@@ -27,14 +27,7 @@ import 'monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js';
 
-import { runJSTest } from './sandbox/javascript';
-
-export type SandboxFiles = { [filename: string]: string };
-
-const useSandboxFiles = () => {
-  const [files, setFiles] = useState<SandboxFiles>({});
-  return { files, setFiles };
-};
+import { EditorState } from './Sandbox';
 
 monaco.languages.registerDocumentFormattingEditProvider('javascript', {
   async provideDocumentFormattingEdits(model) {
@@ -71,8 +64,9 @@ const getLanguage = (filename: string) => {
   return languageByExtensions[ext] || 'text';
 };
 
-export const useSandbox = (initialSources: { [p: string]: string }) => {
+export const useSandboxEditor = (state: EditorState) => {
   console.log('useSandbox');
+  const { initialSources, files, setFiles, run } = state;
 
   const editorDiv = useRef<HTMLDivElement>(null);
   const [
@@ -80,10 +74,7 @@ export const useSandbox = (initialSources: { [p: string]: string }) => {
     setEditor
   ] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const { files, setFiles } = useSandboxFiles();
-
   const [filename, setFilename] = React.useState('index.test.js');
-  const [stdout, setStdout] = React.useState('');
   const subscriptionRef = useRef<monaco.IDisposable[]>([]);
   const modelsRef = useRef<{ [name: string]: monaco.editor.ITextModel }>(
     {}
@@ -91,15 +82,6 @@ export const useSandbox = (initialSources: { [p: string]: string }) => {
   const editorStatesRef = useRef<{
     [name: string]: monaco.editor.ICodeEditorViewState;
   }>({});
-
-  const run = React.useCallback(
-    (name: string = 'index.test.js') => {
-      console.log('run');
-      setStdout('');
-      runJSTest(files, name, setStdout);
-    },
-    [files, setStdout]
-  );
 
   const unsubscription = () => {
     subscriptionRef.current.forEach(subscription => {
@@ -138,7 +120,7 @@ export const useSandbox = (initialSources: { [p: string]: string }) => {
     if (!editor) {
       return;
     }
-    editor!.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
       editor.getAction('editor.action.formatDocument').run();
       run('index.test.js');
     });
@@ -226,12 +208,9 @@ export const useSandbox = (initialSources: { [p: string]: string }) => {
     [selectFilename, setFiles]
   );
 
-  const sources = files;
   return {
     run,
-    stdout,
     editorDiv,
-    sources,
     selectFilename,
     newFile,
     filename
