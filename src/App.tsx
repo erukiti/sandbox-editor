@@ -1,7 +1,9 @@
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
-import Sandbox from "./Sandbox";
+// import Sandbox from './Sandbox';
+import Editor from './editor/editor';
+import { useTextEditorDetail } from './editor/TextEditor';
 
 const AppDiv = styled.div`
   width: 100vw;
@@ -15,7 +17,7 @@ const App: React.FC = () => {
   // return <Todo />
   return (
     <AppDiv>
-      <Sandbox />
+      <Editor useEditorDetail={useTextEditorDetail} />
     </AppDiv>
   );
 };
