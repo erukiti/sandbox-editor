@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 
-import { useSandboxEditor } from './SandboxHooks';
+import { MonacoEditor } from './MonacoEditor';
 
 import { runJSTest } from './sandbox/javascript';
 
@@ -60,13 +60,6 @@ const SandboxDiv = styled.div`
   grid-template-columns: 50% 50%;
 `;
 
-export type EditorProps = {
-  run: (name?: string) => void;
-  filename: string;
-  text: string;
-  setText: (newText: string, newFilename?: string) => void;
-};
-
 const Sandbox: React.FC = () => {
   const {
     files,
@@ -88,12 +81,6 @@ const Sandbox: React.FC = () => {
 
   const text = files[filename];
 
-  const { editorDiv } = useSandboxEditor({
-    run,
-    setText,
-    filename,
-    text
-  });
   const [newFilename, setNewFilename] = React.useState('');
 
   const sourceList = Object.keys(files).map(name => ({
@@ -104,7 +91,14 @@ const Sandbox: React.FC = () => {
   console.log('sources', files);
   return (
     <SandboxDiv>
-      <EditorDiv style={{ gridColumn: '1/2' }} ref={editorDiv} />
+      <div style={{ gridColumn: '1/2', height: '100%' }}>
+        <MonacoEditor
+          run={run}
+          text={text}
+          setText={setText}
+          filename={filename}
+        />
+      </div>
       <div style={{ gridColumn: '2/2' }}>
         <button onClick={() => run()}>RUN</button>
         <form

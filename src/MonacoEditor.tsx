@@ -1,4 +1,4 @@
-import { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
 
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
@@ -26,8 +26,6 @@ import 'monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js';
 import 'monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js';
 import 'monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js';
-
-import { EditorProps } from './Sandbox';
 
 monaco.languages.registerDocumentFormattingEditProvider('javascript', {
   async provideDocumentFormattingEdits(model) {
@@ -71,9 +69,20 @@ type EditorState = {
   };
 };
 
-export const useSandboxEditor = (state: EditorProps) => {
+type Props = {
+  run: (name?: string) => void;
+  filename: string;
+  text: string;
+  setText: (newText: string, newFilename?: string) => void;
+};
+
+export const MonacoEditor: React.FC<Props> = ({
+  run,
+  filename,
+  text,
+  setText
+}) => {
   console.log('useSandbox');
-  const { setText, run, text, filename } = state;
 
   const editorDiv = useRef<HTMLDivElement>(null);
   const [
@@ -198,7 +207,5 @@ export const useSandboxEditor = (state: EditorProps) => {
     };
   }, [editor, filename, setText]);
 
-  return {
-    editorDiv
-  };
+  return <div ref={editorDiv} />;
 };
