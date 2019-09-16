@@ -37,7 +37,6 @@ monaco.languages.registerDocumentFormattingEditProvider('javascript', {
       singleQuote: true,
       tabWidth: 2
     });
-    console.log('format');
 
     return [
       {
@@ -58,7 +57,6 @@ const languageByExtensions: { [props: string]: string } = {
 
 const getLanguage = (filename: string) => {
   const ext = filename.split('.').pop() || '';
-  console.log(ext);
   return languageByExtensions[ext] || 'text';
 };
 
