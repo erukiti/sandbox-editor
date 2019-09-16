@@ -1,28 +1,28 @@
-import expect from "expect";
-import { SaferEval } from "safer-eval";
+import expect from 'expect';
+import { SaferEval } from 'safer-eval';
 
 const runInJSSandbox = (
   sources: { [name: string]: string },
   filename: string,
   setStdout: (s: string | ((s: string) => string)) => void
 ) => {
-  console.log("run JS", filename);
+  console.log('run JS', filename);
   const consoleInSandbox = (...args: any[]) =>
-    setStdout(s => s + args.map(arg => arg.toString()).join(" "));
+    setStdout(s => s + args.map(arg => arg.toString()).join(' '));
 
-  const tests: { [d: string]: { [t: string]: Function } } = { "": {} };
+  const tests: { [d: string]: { [t: string]: Function } } = { '': {} };
 
-  let current = "";
+  let current = '';
 
   const describe = (label: string, cb: Function) => {
-    console.log("describe", label);
+    console.log('describe', label);
     tests[label] = tests[label] || {};
     current = label;
     cb();
   };
 
   const test = (label: string, cb: Function) => {
-    console.log("test", current, label);
+    console.log('test', current, label);
     tests[current][label] = cb;
   };
 
@@ -36,7 +36,7 @@ const runInJSSandbox = (
     module,
     require: (s: string) => {
       const { exports } = runInJSSandbox(sources, s, setStdout);
-      console.log("exports", s, exports);
+      console.log('exports', s, exports);
       return exports;
     }
   });
@@ -53,23 +53,23 @@ export const runJSTest = async (
   entrypoint: string,
   setStdout: (s: string | ((s: string) => string)) => void
 ) => {
-  setStdout("");
+  setStdout('');
 
   try {
     const { tests } = runInJSSandbox(sources, entrypoint, setStdout);
-    console.dir("test results", tests);
+    console.dir('test results', tests);
 
     Object.keys(tests).forEach(testDesc => {
-      setStdout(s => s + testDesc + "\n");
+      setStdout(s => s + testDesc + '\n');
       Object.keys(tests[testDesc]).forEach(testSubject => {
-        setStdout(s => s + "test: " + testSubject + "\n");
+        setStdout(s => s + 'test: ' + testSubject + '\n');
         tests[testDesc][testSubject]();
-        setStdout(s => s + ".");
+        setStdout(s => s + '.');
       });
-      setStdout(s => s + "\n");
+      setStdout(s => s + '\n');
     });
 
-    setStdout(s => s + "\n\nOK.\n");
+    setStdout(s => s + '\n\nOK.\n');
   } catch (e) {
     console.dir(e.matcherResult);
     setStdout(s => s + e.toString());

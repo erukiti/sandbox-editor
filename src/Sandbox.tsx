@@ -30,7 +30,22 @@ const useSandboxFiles = () => {
   const [files, setFiles] = useState<SandboxFiles>(initialSources);
   const [filename, setFilename] = React.useState('index.test.js');
 
-  return { files, setFiles, filename, setFilename };
+  const setText = useCallback(
+    (newText: string, newFilename: string = filename) => {
+      setFiles(x => ({
+        ...x,
+        [newFilename]: newText
+      }));
+    },
+    [setFiles, filename]
+  );
+
+  const newFile = (newFilename: string) => {
+    setText('', newFilename);
+    setFilename(newFilename);
+  };
+
+  return { files, setText, newFile, filename, setFilename };
 };
 
 const EditorDiv = styled.div`
@@ -53,7 +68,13 @@ export type EditorProps = {
 };
 
 const Sandbox: React.FC = () => {
-  const { files, setFiles, filename, setFilename } = useSandboxFiles();
+  const {
+    files,
+    setText,
+    newFile,
+    filename,
+    setFilename
+  } = useSandboxFiles();
   const [stdout, setStdout] = React.useState('');
 
   const run = React.useCallback(
@@ -66,20 +87,6 @@ const Sandbox: React.FC = () => {
   );
 
   const text = files[filename];
-  const setText = useCallback(
-    (newText: string, newFilename: string = filename) => {
-      setFiles(x => ({
-        ...x,
-        [newFilename]: newText
-      }));
-    },
-    [setFiles, filename]
-  );
-
-  const newFile = (newFilename: string) => {
-    setText('', newFilename);
-    setFilename(newFilename);
-  };
 
   const { editorDiv } = useSandboxEditor({
     run,

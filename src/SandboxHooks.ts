@@ -121,6 +121,7 @@ export const useSandboxEditor = (state: EditorProps) => {
     if (!editor) {
       return;
     }
+    // セーブコマンドの登録
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
       editor.getAction('editor.action.formatDocument').run();
       run('index.test.js');
@@ -134,6 +135,7 @@ export const useSandboxEditor = (state: EditorProps) => {
 
     console.log('create model and EditorViewState');
 
+    // text/filename を、エディタモデルに変換
     const newModel = () => {
       const model = monaco.editor.createModel(text, getLanguage(filename));
       model.updateOptions({ tabSize: 2 });
@@ -172,6 +174,7 @@ export const useSandboxEditor = (state: EditorProps) => {
       return;
     }
     console.log('create model subscription', filename);
+    // 文字入力を、setTextに反映させるフック
     subscriptionRef.current.push(
       editorStateRef.current[filename].model.onDidChangeContent(ev => {
         editorStateRef.current[
@@ -181,6 +184,7 @@ export const useSandboxEditor = (state: EditorProps) => {
         // onChange
       })
     );
+    // cursor移動を、saveStateするフック
     subscriptionRef.current.push(
       editor.onDidChangeCursorPosition(ev => {
         editorStateRef.current[
