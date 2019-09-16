@@ -66,7 +66,14 @@ const getLanguage = (filename: string) => {
 
 export const useSandboxEditor = (state: EditorState) => {
   console.log('useSandbox');
-  const { initialSources, files, setFiles, run } = state;
+  const {
+    initialSources,
+    files,
+    setFiles,
+    run,
+    filename,
+    setFilename
+  } = state;
 
   const editorDiv = useRef<HTMLDivElement>(null);
   const [
@@ -74,7 +81,6 @@ export const useSandboxEditor = (state: EditorState) => {
     setEditor
   ] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const [filename, setFilename] = React.useState('index.test.js');
   const subscriptionRef = useRef<monaco.IDisposable[]>([]);
   const modelsRef = useRef<{ [name: string]: monaco.editor.ITextModel }>(
     {}

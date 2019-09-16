@@ -48,10 +48,13 @@ export type EditorState = {
   setFiles: React.Dispatch<React.SetStateAction<SandboxFiles>>;
   run: (name?: string) => void;
   initialSources: { [p: string]: string };
+  filename: string;
+  setFilename: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const Sandbox: React.FC = () => {
   const { files, setFiles } = useSandboxFiles();
+  const [filename, setFilename] = React.useState('index.test.js');
   const [stdout, setStdout] = React.useState('');
 
   const run = React.useCallback(
@@ -63,9 +66,14 @@ const Sandbox: React.FC = () => {
     [files, setStdout]
   );
 
-  const { editorDiv, selectFilename, newFile, filename } = useSandboxEditor(
-    { initialSources, run, files, setFiles }
-  );
+  const { editorDiv, selectFilename, newFile } = useSandboxEditor({
+    initialSources,
+    run,
+    files,
+    setFiles,
+    filename,
+    setFilename
+  });
   const [newFilename, setNewFilename] = React.useState('');
 
   const sourceList = Object.keys(files).map(name => ({
