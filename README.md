@@ -1,3 +1,13 @@
+# JavaScript Sandbox Editor
+
+Effective React Hooksのサンプルアプリです。
+
+* https://techbookfest.org/event/tbf07/circle/5669342192599040
+
+![スクショ](./ss.png)
+
+## ライセンス
+
 ```
 Copyright 2019 SASAKI Shunsuke
 https://github.com/erukiti/sandbox-editor
